@@ -27,8 +27,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
           
     steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.3
+        
+    - uses: actions/checkout@v3
+
     - name: Install golang-migrate
       run: | 
         curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
@@ -37,13 +46,6 @@ jobs:
     
     - name: Migrate db
       run: make migrate
-    
-    - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
         
     - name: Test
       run: go test -v ./...
