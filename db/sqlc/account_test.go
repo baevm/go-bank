@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
-	"go-bank/testutil"
+	"go-bank/internal/testutil"
 	"testing"
 	"time"
 
@@ -32,11 +32,11 @@ func createRandomAccount(t *testing.T) Accounts {
 	return account
 }
 
-func TestCreateAccount(t *testing.T) {
+func Test_CreateAccount(t *testing.T) {
 	createRandomAccount(t)
 }
 
-func TestGetAccount(t *testing.T) {
+func Test_GetAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
 	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
 
@@ -48,7 +48,7 @@ func TestGetAccount(t *testing.T) {
 	require.WithinDuration(t, account1.CreatedAt, account2.CreatedAt, time.Second)
 }
 
-func TestUpdateAccount(t *testing.T) {
+func Test_UpdateAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
 	args := UpdateAccountParams{
 		ID:      account1.ID,
@@ -67,7 +67,7 @@ func TestUpdateAccount(t *testing.T) {
 	require.WithinDuration(t, account1.CreatedAt, account2.CreatedAt, time.Second)
 }
 
-func TestDeleteAccount(t *testing.T) {
+func Test_DeleteAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
 	err := testQueries.DeleteAccount(context.Background(), account1.ID)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestDeleteAccount(t *testing.T) {
 	require.Empty(t, account2)
 }
 
-func TestListAccounts(t *testing.T) {
+func Test_ListAccounts(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		createRandomAccount(t)
 	}

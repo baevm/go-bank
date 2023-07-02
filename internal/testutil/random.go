@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"go-bank/internal/util"
 	"math/rand"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func RandomMoney() int64 {
 }
 
 func RandomCurrency() string {
-	currencies := []string{"USD", "EUR", "RUB"}
+	currencies := []string{util.EUR, util.USD}
 
 	n := len(currencies)
 

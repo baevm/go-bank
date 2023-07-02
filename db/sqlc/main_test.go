@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"go-bank/config"
 	"log"
 	"os"
 	"testing"
@@ -13,7 +14,12 @@ var testQueries *Queries
 var testDb *sql.DB
 
 func TestMain(m *testing.M) {
-	conn, err := sql.Open("postgres", "postgres://postgres:123456@localhost/go-bank?sslmode=disable")
+	cfg, err := config.Load("../..")
+	if err != nil {
+		log.Fatal("Cant read cfg file: ", err)
+	}
+
+	conn, err := sql.Open("postgres", cfg.DB_DSN)
 
 	if err != nil {
 		log.Fatal("Cant connect to database: ", err)
