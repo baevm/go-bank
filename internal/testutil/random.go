@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"fmt"
 	"go-bank/internal/util"
 	"math/rand"
 	"strings"
@@ -44,4 +45,11 @@ func RandomCurrency() string {
 	n := len(currencies)
 
 	return currencies[rand.Intn(n)]
+}
+
+func RandomEmail() string {
+	name := RandomString(int(RandomInt(5, 15)))
+	domain := RandomString(5)
+
+	return fmt.Sprintf("%s@%s.com", name, domain)
 }

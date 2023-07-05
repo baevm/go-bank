@@ -12,13 +12,16 @@ startdb:
 	docker start postgres12
 
 dropdb:
-	docker exec -it postgres12 dropdb go-bank
+	docker exec -it postgres12 dropdb --username=postgres go-bank
 
 migration:
 	migrate create -seq -ext .sql -dir ./db/migration ${name}
 
-migrate:
+migrate-up:
 	migrate -path=./db/migration -database=${DB_DSN} up
+
+migrate-down:
+	migrate -path=./db/migration -database=${DB_DSN} down
 
 sqlc:
 	sqlc generate
@@ -38,4 +41,4 @@ run:
 
 
 
-.PHONY: postgres createdb dropdb migration migrate sqlc test run genmock
+.PHONY: postgres createdb dropdb migration migrate-up sqlc test run genmock
