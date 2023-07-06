@@ -11,13 +11,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GetAccount(t *testing.T) {
-	account := randomAccount()
+	randomUser, _ := RandomUser(t)
+	account := randomAccount(randomUser.Username)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -30,11 +32,13 @@ func Test_GetAccount(t *testing.T) {
 		Return(account, nil)
 
 	// start server and send req
-	server := NewServer(store)
+	server := NewTestServer(t, store)
 	recorder := httptest.NewRecorder()
 
 	url := fmt.Sprintf("/accounts/%d", account.ID)
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	addAuthorization(t, req, server.tokenMaker, authorizationTypeBearer, randomUser.Username, time.Minute)
 
 	server.router.ServeHTTP(recorder, req)
 
@@ -43,10 +47,10 @@ func Test_GetAccount(t *testing.T) {
 	requireBodyMatchAccount(t, recorder.Body, account)
 }
 
-func randomAccount() db.Accounts {
+func randomAccount(owner string) db.Accounts {
 	return db.Accounts{
 		ID:       testutil.RandomInt(1, 1000),
-		Owner:    testutil.RandomOwner(),
+		Owner:    owner,
 		Balance:  testutil.RandomMoney(),
 		Currency: testutil.RandomCurrency(),
 	}

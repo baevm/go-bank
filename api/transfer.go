@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	db "go-bank/db/sqlc"
+	"go-bank/internal/token"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,11 +32,21 @@ func (s *Server) CreateTransfer(ctx *gin.Context) {
 		Amount:        req.Amount,
 	}
 
-	if !s.isValidAccountCurrency(ctx, req.FromAccountID, req.Currency) {
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	fromAccount, isValid := s.isValidAccountCurrency(ctx, req.FromAccountID, req.Currency)
+	if !isValid {
 		return
 	}
 
-	if !s.isValidAccountCurrency(ctx, req.ToAccountID, req.Currency) {
+	if authPayload.Username != fromAccount.Owner {
+		err := errors.New("account not found")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	_, isValid = s.isValidAccountCurrency(ctx, req.ToAccountID, req.Currency)
+	if !isValid {
 		return
 	}
 
@@ -49,24 +60,24 @@ func (s *Server) CreateTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, transfer)
 }
 
-func (s *Server) isValidAccountCurrency(ctx *gin.Context, accountId int64, currency string) bool {
+func (s *Server) isValidAccountCurrency(ctx *gin.Context, accountId int64, currency string) (db.Accounts, bool) {
 	acc, err := s.db.GetAccount(ctx, accountId)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, "not found")
-			return false
+			return acc, false
 		} else {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			return false
+			return acc, false
 		}
 	}
 
 	if acc.Currency != currency {
 		err = fmt.Errorf("account currency mismatch")
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return acc, false
 	}
 
-	return true
+	return acc, true
 }

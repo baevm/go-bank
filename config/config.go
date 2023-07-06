@@ -1,27 +1,34 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"time"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
-	DB_DSN   string `mapstructure:"DB_DSN"`
-	SRV_ADDR string `mapstructure:"SRV_ADDR"`
+	DB_DSN                string        `mapstructure:"DB_DSN"`
+	SRV_ADDR              string        `mapstructure:"SRV_ADDR"`
+	TOKEN_SYMMETRIC_KEY   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	ACCESS_TOKEN_DURATION time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 }
 
-func Load(path string) (*Config, error) {
+func Load(path string) (Config, error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigName("app")
 	viper.SetConfigType("env")
-	
+
 	viper.AutomaticEnv()
 
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		return nil, err
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
 	}
 
 	var cfg Config
-	err = viper.Unmarshal(&cfg)
 
-	return &cfg, err
+	if err := viper.Unmarshal(&cfg); err != nil {
+		panic(err)
+	}
+
+	return cfg, nil
 }

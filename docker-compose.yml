@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  db:
+    container_name: go-bank-db
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=go-bank
+    networks:
+      - bank-network
+  api:
+    container_name: go-bank-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DB_DSN=postgres://postgres:123456@db/go-bank?sslmode=disable
+    ports:
+      - 5000:5000
+    networks:
+      - bank-network
+    depends_on:
+      - db
+
+networks:
+  bank-network:
+    driver: bridge

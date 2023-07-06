@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	db "go-bank/db/sqlc"
+	"go-bank/internal/token"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,6 @@ import (
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
@@ -23,8 +23,10 @@ func (s *Server) CreateAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	args := db.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    authPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -74,6 +76,14 @@ func (s *Server) GetAccount(ctx *gin.Context) {
 		}
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	if acc.Owner != authPayload.Username {
+		err := errors.New("account not found")
+		ctx.JSON(http.StatusForbidden, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, acc)
 }
 
@@ -90,7 +100,10 @@ func (s *Server) ListAccounts(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	accounts, err := s.db.ListAccounts(ctx, db.ListAccountsParams{
+		Owner:  authPayload.Username,
 		Limit:  req.Size,
 		Offset: (req.Page - 1) * req.Size,
 	})

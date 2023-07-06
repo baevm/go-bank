@@ -38,7 +38,11 @@ run:
 	go run main.go
 
 # ======================================== UTILS =====================================================================
+docker-build:
+	docker build -t go-bank:latest .
+
+docker-run:
+	docker run --name go-bank -p 5000:5000 -e GIN_MODE=release go-bank:latest
 
 
-
-.PHONY: postgres createdb dropdb migration migrate-up sqlc test run genmock
+.PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock

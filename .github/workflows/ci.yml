@@ -45,7 +45,7 @@ jobs:
         which migrate
     
     - name: Migrate db
-      run: make migrate
+      run: make migrate-up
         
     - name: Test
       run: go test -v ./...
