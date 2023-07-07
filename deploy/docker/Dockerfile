@@ -18,7 +18,7 @@ COPY --from=builder /app/go-bank/main .
 COPY --from=builder /app/go-bank/migrate ./migrate
 COPY app.env .
 COPY db/migration ./migration
-COPY start.sh .
+COPY ./deploy/docker/start.sh .
 
 EXPOSE 5000
 

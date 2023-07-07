@@ -24,7 +24,8 @@ migrate-down:
 	migrate -path=./db/migration -database=${DB_DSN} down
 
 sqlc:
-	sqlc generate
+	sqlc generate 
+	$(MAKE) mock
 
 mock:
 	mockgen -destination ./db/mock/store.go -package mockdb "go-bank/db/sqlc" Store

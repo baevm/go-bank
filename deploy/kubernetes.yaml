@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-bank-api-deployment
+  labels:
+    app: go-bank-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-bank-api
+  template:
+    metadata:
+      labels:
+        app: go-bank-api
+    spec:
+      containers:
+        - name: go-bank-api
+          image: go-bank-api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000

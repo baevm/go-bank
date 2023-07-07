@@ -1,8 +1,6 @@
 package api
 
 import (
-	"database/sql"
-	"errors"
 	db "go-bank/db/sqlc"
 	"go-bank/internal/password"
 	"net/http"
@@ -59,54 +57,4 @@ func (s *Server) CreateUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, "ok")
-}
-
-type loginUserRequest struct {
-	Username string `json:"username" binding:"required,alphanum"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
-type loginUserResponse struct {
-	Username    string `json:"username"`
-	AccessToken string `json:"access_token"`
-}
-
-func (s *Server) Login(ctx *gin.Context) {
-	var req loginUserRequest
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	user, err := s.db.GetUser(ctx, req.Username)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		} else {
-			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			return
-		}
-	}
-
-	err = password.Check(user.HashedPass, req.Password)
-
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
-		return
-	}
-
-	token, err := s.tokenMaker.Create(req.Username, s.cfg.ACCESS_TOKEN_DURATION)
-
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, &loginUserResponse{
-		AccessToken: token,
-		Username:    req.Username,
-	})
 }

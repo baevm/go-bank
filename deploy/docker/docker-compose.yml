@@ -15,8 +15,8 @@ services:
   api:
     container_name: go-bank-api
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: ./deploy/docker/Dockerfile
     environment:
       - DB_DSN=postgres://postgres:123456@db/go-bank?sslmode=disable
     ports:

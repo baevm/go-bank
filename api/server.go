@@ -46,6 +46,7 @@ func (s *Server) setupRouter() *gin.Engine {
 
 	router.POST("/users", s.CreateUser)
 	router.POST("/users/login", s.Login)
+	router.POST("/users/refreshToken", s.RefreshAccessToken)
 
 	authRoutes := router.Group("/")
 	{
