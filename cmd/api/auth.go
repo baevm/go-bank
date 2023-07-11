@@ -26,7 +26,7 @@ type loginUserResponse struct {
 	RefreshTokenExpire time.Time `json:"refresh_token_expire"`
 }
 
-func (s *Server) Login(ctx *gin.Context) {
+func (s *HTTPServer) Login(ctx *gin.Context) {
 	var req loginUserRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -101,7 +101,7 @@ type refreshAccessTokenResponse struct {
 	AccessTokenExpire time.Time `json:"access_token_expire"`
 }
 
-func (s *Server) RefreshAccessToken(ctx *gin.Context) {
+func (s *HTTPServer) RefreshAccessToken(ctx *gin.Context) {
 	var req refreshAccessTokenRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {

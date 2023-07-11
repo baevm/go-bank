@@ -2,7 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"go-bank/api"
+	"go-bank/cmd/api"
+	"go-bank/cmd/grpc"
 	"go-bank/config"
 	"log"
 
@@ -13,27 +14,58 @@ import (
 
 func main() {
 	cfg, err := config.Load(".")
-
 	if err != nil {
 		log.Fatal("Cant read config file: ", err)
 	}
 
 	conn, err := sql.Open("postgres", cfg.DB_DSN)
-
 	if err != nil {
 		log.Fatal("Cant connect to database: ", err)
 	}
 
-	store := db.NewStore(conn)
-	server, err := api.NewServer(cfg, store)
+	db := db.NewStore(conn)
 
+	go func() {
+		startGrpcServer(cfg, db)
+	}()
+
+	startGatewayServer(cfg, db)
+
+	//startHTTPServer(cfg, db)
+}
+
+func startHTTPServer(cfg config.Config, db db.Store) {
+	httpServer, err := api.NewHTTPServer(cfg, db)
 	if err != nil {
-		log.Fatal("Cant start server: ", err)
+		log.Fatal("Cant create http server: ", err)
 	}
 
-	err = server.Start(cfg.SRV_ADDR)
-
+	err = httpServer.Start(cfg.SRV_ADDR)
 	if err != nil {
-		log.Fatal("Cant start server: ", err)
+		log.Fatal("Cant start http server: ", err)
+	}
+}
+
+func startGrpcServer(cfg config.Config, db db.Store) {
+	grpcServer, err := grpc.NewGrpcServer(cfg, db)
+	if err != nil {
+		log.Fatal("Cant create grpc server: ", err)
+	}
+
+	err = grpcServer.Start()
+	if err != nil {
+		log.Fatal("Cant start grpc server: ", err)
+	}
+}
+
+func startGatewayServer(cfg config.Config, db db.Store) {
+	grpcServer, err := grpc.NewGrpcServer(cfg, db)
+	if err != nil {
+		log.Fatal("Cant create grpc gateway server: ", err)
+	}
+
+	err = grpcServer.StartGateway()
+	if err != nil {
+		log.Fatal("Cant start grpc gateway server: ", err)
 	}
 }

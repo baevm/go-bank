@@ -38,12 +38,18 @@ test:
 run:
 	go run main.go
 
-# ======================================== UTILS =====================================================================
 docker-build:
 	docker build -t go-bank:latest .
 
 docker-run:
 	docker run --name go-bank -p 5000:5000 -e GIN_MODE=release go-bank:latest
+
+# ======================================== GRPC ======================================================================
+grpc-compile:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative --go-grpc_out=pb --go-grpc_opt=paths=source_relative --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative proto/*.proto
+
+# ======================================== UTILS ======================================================================
 
 
 .PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock

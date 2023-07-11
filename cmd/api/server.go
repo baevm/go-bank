@@ -12,21 +12,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type Server struct {
+type HTTPServer struct {
 	db         db.Store
 	router     *gin.Engine
 	tokenMaker token.Maker
 	cfg        config.Config
 }
 
-func NewServer(config config.Config, db db.Store) (*Server, error) {
+func NewHTTPServer(config config.Config, db db.Store) (*HTTPServer, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TOKEN_SYMMETRIC_KEY)
 
 	if err != nil {
 		return nil, fmt.Errorf("cant create server: %s", err)
 	}
 
-	server := &Server{
+	server := &HTTPServer{
 		db:         db,
 		tokenMaker: tokenMaker,
 		cfg:        config,
@@ -41,7 +41,7 @@ func NewServer(config config.Config, db db.Store) (*Server, error) {
 	return server, nil
 }
 
-func (s *Server) setupRouter() *gin.Engine {
+func (s *HTTPServer) setupRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.POST("/users", s.CreateUser)
@@ -64,7 +64,7 @@ func (s *Server) setupRouter() *gin.Engine {
 	return router
 }
 
-func (s *Server) Start(addr string) error {
+func (s *HTTPServer) Start(addr string) error {
 	return s.router.Run(addr)
 }
 
