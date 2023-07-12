@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"go-bank/internal/password"
 	"go-bank/internal/testutil"
 	"testing"
@@ -53,4 +54,31 @@ func Test_GetUser(t *testing.T) {
 
 	require.WithinDuration(t, user1.PasswordChangedAt, user2.PasswordChangedAt, time.Second)
 	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+}
+
+func Test_UpdateUser(t *testing.T) {
+	oldUser := createRandomUser(t)
+
+	args := UpdateUserParams{
+		Email: sql.NullString{
+			String: testutil.RandomEmail(),
+			Valid:  true,
+		},
+		FullName: sql.NullString{
+			String: testutil.RandomOwner(),
+			Valid:  true,
+		},
+		Username: oldUser.Username,
+	}
+
+	updatedUser, err := testQueries.UpdateUser(context.Background(), args)
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedUser)
+
+	require.NotEqual(t, oldUser.Email, updatedUser.Email)
+	require.NotEqual(t, oldUser.FullName, updatedUser.FullName)
+
+	require.Equal(t, args.Email.String, updatedUser.Email)
+	require.Equal(t, args.FullName.String, updatedUser.FullName)
+	require.Equal(t, args.HashedPass, updatedUser.HashedPass)
 }
