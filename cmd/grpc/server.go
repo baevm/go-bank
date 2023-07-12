@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-bank/config"
 	db "go-bank/db/sqlc"
+	"go-bank/doc"
 	"go-bank/internal/token"
 	"go-bank/pb"
 	"log"
@@ -90,6 +91,15 @@ func (s *GrpcServer) StartGateway() error {
 	// Create http mux
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
+
+	swaggerFolder, err := doc.GetSwaggerFolder()
+
+	if err != nil {
+		return err
+	}
+
+	static := http.FileServer(http.FS(swaggerFolder))
+	mux.Handle("/swagger/", http.StripPrefix("/swagger/", static))
 
 	// Start server
 	log.Printf("Listening and serving GRPC Gateway on: %s \n", s.cfg.SRV_ADDR)

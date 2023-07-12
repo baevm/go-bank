@@ -39,17 +39,25 @@ run:
 	go run main.go
 
 docker-build:
-	docker build -t go-bank:latest .
+	docker build -f deploy/docker/Dockerfile -t go-bank:latest .
 
 docker-run:
 	docker run --name go-bank -p 5000:5000 -e GIN_MODE=release go-bank:latest
 
+docker-compose:
+	docker-compose -f deploy/docker/docker-compose.yml up 
+
 # ======================================== GRPC ======================================================================
 grpc-compile:
 	rm -f pb/*.go
-	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative --go-grpc_out=pb --go-grpc_opt=paths=source_relative --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative proto/*.proto
+	rm -f doc/swagger/*.swagger.json
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-bank \
+	proto/*.proto
 
 # ======================================== UTILS ======================================================================
 
 
-.PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock
+.PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock grpc-compile

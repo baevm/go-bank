@@ -3,7 +3,7 @@ FROM golang:1.20-alpine3.17 as builder
 
 WORKDIR /app/go-bank
 
-COPY . .
+COPY ../../ .
 
 RUN go build -o main main.go
 RUN apk add curl
@@ -18,9 +18,10 @@ COPY --from=builder /app/go-bank/main .
 COPY --from=builder /app/go-bank/migrate ./migrate
 COPY app.env .
 COPY db/migration ./migration
-COPY ./deploy/docker/start.sh .
+COPY deploy/docker/start.sh .
 
 EXPOSE 5000
+EXPOSE 5104
 
 CMD ["/app/go-bank/main"]
 ENTRYPOINT ["/app/go-bank/start.sh"]

@@ -18,6 +18,8 @@ func main() {
 		log.Fatal("Cant read config file: ", err)
 	}
 
+	log.Println(cfg.DB_DSN)
+
 	conn, err := sql.Open("postgres", cfg.DB_DSN)
 	if err != nil {
 		log.Fatal("Cant connect to database: ", err)
