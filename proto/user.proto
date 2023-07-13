@@ -13,7 +13,7 @@ option go_package="go-bank/pb";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     info: {
         title: "Go bank";
-        version: "1.0";
+        version: "1.1";
         contact: {
           name: "";
           url: "";
@@ -43,6 +43,16 @@ service UserService {
             description: "Used to login user and get tokens"
         };
     };
+    rpc UpdateUser(UpdateRequest) returns (UpdateResponse) {
+        option (google.api.http) = {
+            patch: "/v1/update_user"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)= {
+            summary: "Update existing user",
+            description: "Used to update user"
+        };
+    };
 }
 
 
@@ -69,4 +79,15 @@ message LoginResponse {
     google.protobuf.Timestamp access_token_expire=4;
     string refresh_token=5;
     google.protobuf.Timestamp refresh_token_expire=6;
+}
+
+message UpdateRequest {
+    string username  = 1;
+    optional string email  = 2;
+    optional string full_name  = 3;
+    optional string password = 4;
+}
+
+message UpdateResponse {
+    string message = 1;
 }

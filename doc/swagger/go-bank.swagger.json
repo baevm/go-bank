@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Go bank",
-    "version": "1.0",
+    "version": "1.1",
     "contact": {}
   },
   "tags": [
@@ -54,7 +54,7 @@
     "/v1/login_user": {
       "post": {
         "summary": "Login existing user",
-        "description": "Used to login user and get refresh token",
+        "description": "Used to login user and get tokens",
         "operationId": "UserService_LoginUser",
         "responses": {
           "200": {
@@ -77,6 +77,40 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/pbLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/v1/update_user": {
+      "patch": {
+        "summary": "Update existing user",
+        "description": "Used to update user",
+        "operationId": "UserService_UpdateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbUpdateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbUpdateRequest"
             }
           }
         ],
@@ -145,6 +179,31 @@
         "refreshTokenExpire": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "pbUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "pbUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
         }
       }
     },

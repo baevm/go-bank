@@ -7,6 +7,7 @@ import (
 	db "go-bank/db/sqlc"
 	"go-bank/internal/password"
 	"go-bank/pb"
+	"time"
 
 	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
@@ -98,5 +99,52 @@ func (s *GrpcServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.L
 		AccessTokenExpire:  timestamppb.New(accessPayload.ExpiresAt.Time),
 		RefreshToken:       refreshToken,
 		RefreshTokenExpire: timestamppb.New(refreshPayload.ExpiresAt.Time),
+	}, nil
+}
+
+func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+
+	args := db.UpdateUserParams{
+		Username: req.Username,
+		FullName: sql.NullString{
+			String: req.GetFullName(),
+			Valid:  req.FullName != nil,
+		},
+		Email: sql.NullString{
+			String: req.GetEmail(),
+			Valid:  req.Email != nil,
+		},
+	}
+
+	if req.Password != nil {
+		hashedPass, err := password.Hash(req.GetPassword())
+
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+
+		args.HashedPass = sql.NullString{
+			String: hashedPass,
+			Valid:  true,
+		}
+
+		args.PasswordChangedAt = sql.NullTime{
+			Time: time.Now(),
+			Valid: true,
+		}
+	}
+
+	_, err := s.db.UpdateUser(ctx, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows){
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		} else {
+			return nil, status.Errorf(codes.Internal, "failed to update user")
+		}
+	}
+
+	return &pb.UpdateResponse{
+		Message: "ok",
 	}, nil
 }
