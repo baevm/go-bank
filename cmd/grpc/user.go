@@ -7,8 +7,10 @@ import (
 	db "go-bank/db/sqlc"
 	"go-bank/internal/password"
 	"go-bank/pb"
+	"go-bank/worker"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +31,25 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateRequest) (*pb
 		FullName:   req.FullName,
 	}
 
-	_, err = s.db.CreateUser(ctx, args)
+	sendVerifyEmail := func(user db.Users) error {
+		err = s.distributor.SendVerifyEmailTask(
+			ctx,
+			&worker.VerifyEmailPayload{
+				Username: args.Username,
+			},
+			[]asynq.Option{
+				asynq.MaxRetry(1),
+				asynq.ProcessIn(10 * time.Second),
+			}...,
+		)
+
+		return err
+	}
+
+	_, err = s.db.CreateUserTx(ctx, db.CreateUserTxParams{
+		CreateUserParams: args,
+		AfterCreate:      sendVerifyEmail,
+	})
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
@@ -103,6 +123,15 @@ func (s *GrpcServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.L
 }
 
 func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+	payload, err := s.authorize(ctx)
+
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, err.Error())
+	}
+
+	if payload.Username != req.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "cant update other user")
+	}
 
 	args := db.UpdateUserParams{
 		Username: req.Username,
@@ -129,15 +158,15 @@ func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateRequest) (*pb
 		}
 
 		args.PasswordChangedAt = sql.NullTime{
-			Time: time.Now(),
+			Time:  time.Now(),
 			Valid: true,
 		}
 	}
 
-	_, err := s.db.UpdateUser(ctx, args)
+	_, err = s.db.UpdateUser(ctx, args)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows){
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "user not found")
 		} else {
 			return nil, status.Errorf(codes.Internal, "failed to update user")

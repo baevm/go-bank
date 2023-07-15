@@ -33,7 +33,7 @@ mock:
 
 # ======================================== SERVER =====================================================================
 test:
-	go test -v -cover ./...
+	go test -v -cover -short ./...
 
 run:
 	go run main.go
@@ -57,7 +57,13 @@ grpc-compile:
 	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-bank \
 	proto/*.proto
 
+
+# ======================================== REDIS =====================================================================
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7-alpine
+
+
 # ======================================== UTILS ======================================================================
 
 
-.PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock grpc-compile
+.PHONY: postgres createdb dropdb migration migrate-up migrate-down sqlc test run genmock grpc-compile redis

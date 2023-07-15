@@ -8,25 +8,27 @@ import (
 	"go-bank/doc"
 	"go-bank/internal/token"
 	"go-bank/pb"
-	"log"
+	"go-bank/worker"
 	"net"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type GrpcServer struct {
-	db         db.Store
-	tokenMaker token.Maker
-	cfg        config.Config
+	db          db.Store
+	tokenMaker  token.Maker
+	cfg         config.Config
+	distributor worker.TaskDistributor
 
 	pb.UnimplementedUserServiceServer
 }
 
-func NewGrpcServer(config config.Config, db db.Store) (*GrpcServer, error) {
+func NewGrpcServer(config config.Config, db db.Store, distributor worker.TaskDistributor) (*GrpcServer, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TOKEN_SYMMETRIC_KEY)
 
 	if err != nil {
@@ -34,9 +36,10 @@ func NewGrpcServer(config config.Config, db db.Store) (*GrpcServer, error) {
 	}
 
 	server := &GrpcServer{
-		db:         db,
-		tokenMaker: tokenMaker,
-		cfg:        config,
+		db:          db,
+		tokenMaker:  tokenMaker,
+		cfg:         config,
+		distributor: distributor,
 	}
 
 	return server, nil
@@ -49,8 +52,9 @@ func (s *GrpcServer) Start() error {
 		return err
 	}
 
-	// Create grpc server
-	grpcServer := grpc.NewServer()
+	// Create grpc server with logger
+	opts := grpc.UnaryInterceptor(GrpcLogger)
+	grpcServer := grpc.NewServer(opts)
 	pb.RegisterUserServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 
@@ -92,6 +96,7 @@ func (s *GrpcServer) StartGateway() error {
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
 
+	// Initialize swagger
 	swaggerFolder, err := doc.GetSwaggerFolder()
 
 	if err != nil {
@@ -101,9 +106,12 @@ func (s *GrpcServer) StartGateway() error {
 	static := http.FileServer(http.FS(swaggerFolder))
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", static))
 
+	// Handler with structured logger
+	handler := GatewayLogger(mux)
+
 	// Start server
 	log.Printf("Listening and serving GRPC Gateway on: %s \n", s.cfg.SRV_ADDR)
-	err = http.Serve(lis, mux)
+	err = http.Serve(lis, handler)
 
 	return err
 }
