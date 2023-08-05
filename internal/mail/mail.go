@@ -37,7 +37,7 @@ func (s *SenderCred) SendEmail(subject, content string, to, cc, bcc, attachFiles
 	e.From = fmt.Sprintf("%s <%s>", s.name, s.fromEmailAddress)
 	e.To = to
 	e.Subject = subject
-	e.Text = []byte(content)
+	e.HTML = []byte(content)
 	e.Cc = cc
 	e.Bcc = bcc
 

@@ -8,7 +8,7 @@ import (
 	"go-bank/doc"
 	"go-bank/internal/token"
 	"go-bank/pb"
-	"go-bank/worker"
+	"go-bank/internal/worker"
 	"net"
 	"net/http"
 

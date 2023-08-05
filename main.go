@@ -5,7 +5,8 @@ import (
 	"go-bank/cmd/grpc"
 	"go-bank/config"
 	"go-bank/db"
-	"go-bank/worker"
+	"go-bank/internal/mail"
+	"go-bank/internal/worker"
 	"os"
 
 	sqlc "go-bank/db/sqlc"
@@ -31,13 +32,15 @@ func main() {
 		log.Fatal().Err(err).Msg("cant start db")
 	}
 
+	mailer := mail.NewEmailSender(cfg.EMAIL_NAME, cfg.EMAIL_ADDRESS, cfg.EMAIL_PASSWORD)
+
 	redisOpt := asynq.RedisClientOpt{
 		Addr: cfg.REDIS_ADDR,
 	}
 
 	distributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	go startTaskProcessor(redisOpt, db)
+	go startTaskProcessor(redisOpt, db, mailer)
 
 	go startGrpcServer(cfg, db, distributor)
 
@@ -82,8 +85,8 @@ func startGatewayServer(cfg config.Config, db sqlc.Store, distributor worker.Tas
 	}
 }
 
-func startTaskProcessor(redisOpt asynq.RedisClientOpt, store sqlc.Store) {
-	processor := worker.NewRedisTaskProcessor(redisOpt, store)
+func startTaskProcessor(redisOpt asynq.RedisClientOpt, store sqlc.Store, mailer mail.EmailSender) {
+	processor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 
 	log.Info().Msg("starting distributed task processor")
 	err := processor.Start()

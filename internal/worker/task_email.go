@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	db "go-bank/db/sqlc"
+	"go-bank/internal/testutil"
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
@@ -57,6 +59,32 @@ func (p *RedisTaskProcessor) ProcessSendVerifyEmailTask(ctx context.Context, t *
 		} else {
 			return fmt.Errorf("failed to get user: %w", err)
 		}
+	}
+
+	verifyEmail, err := p.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: testutil.RandomString(32),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	verifyLink := fmt.Sprintf("http://localhost:5000/v1/verify_email?email_id=%d&secret_code=%s", verifyEmail.ID, verifyEmail.SecretCode)
+
+	subj := "Confirm your email"
+	content := fmt.Sprintf(`
+	<h1>Confirm your email by clicking this link</h1>
+	<div>
+	<a href="%s">Click</a>
+	</div>
+	`, verifyLink)
+
+	err = p.mailer.SendEmail(subj, content, []string{user.Email}, nil, nil, nil)
+
+	if err != nil {
+		return err
 	}
 
 	log.Info().

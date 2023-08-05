@@ -29,6 +29,7 @@ sqlc:
 
 mock:
 	mockgen -destination ./db/mock/store.go -package mockdb "go-bank/db/sqlc" Store
+	mockgen -destination ./internal/worker/mock/distributor.go -package mockwrk "go-bank/worker" TaskDistributor
 
 
 # ======================================== SERVER =====================================================================
@@ -55,12 +56,16 @@ grpc-compile:
 	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
 	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
 	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-bank \
+	--experimental_allow_proto3_optional \
 	proto/*.proto
 
 
 # ======================================== REDIS =====================================================================
-redis:
+createredis:
 	docker run --name redis -p 6379:6379 -d redis:7-alpine
+
+startredis:
+	docker start redis
 
 
 # ======================================== UTILS ======================================================================

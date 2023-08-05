@@ -7,7 +7,7 @@ import (
 	db "go-bank/db/sqlc"
 	"go-bank/internal/password"
 	"go-bank/pb"
-	"go-bank/worker"
+	"go-bank/internal/worker"
 	"time"
 
 	"github.com/hibiken/asynq"

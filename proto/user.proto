@@ -53,6 +53,15 @@ service UserService {
             description: "Used to update user"
         };
     };
+    rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
+        option (google.api.http) = {
+            get: "/v1/verify_email"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)= {
+            summary: "verify user email",
+            description: "Used to verify user email"
+        };
+    };
 }
 
 
@@ -90,4 +99,13 @@ message UpdateRequest {
 
 message UpdateResponse {
     string message = 1;
+}
+
+message VerifyEmailRequest {
+    int64 email_id = 1;
+    string secret_code = 2;
+}
+
+message VerifyEmailResponse {
+    bool is_verified = 1;
 }
